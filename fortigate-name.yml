@@ -1,0 +1,17 @@
+- hosts: fortigates
+  collections:
+   - fortinet.fortios
+  connection: httpapi
+  gatherf_acts: false
+
+  vars:
+   ansible_httpapi_use-ssl: no
+   ansible_httpapi_validate_certs: no
+   ansible_httpapi_port: 80
+
+  tasks:
+  - name: Rename firewall via API
+    fortios_system_global:
+      vdom: "root"
+      system_global:
+        hostname: "Fortigate01"
