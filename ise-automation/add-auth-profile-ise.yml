@@ -1,0 +1,66 @@
+- name: Add Authorization Profile to Cisco ISE (with ACL only)
+  hosts: localhost
+  connection: local
+  gather_facts: no
+
+  vars:
+    ise_host: "10.112.41.147"          # Adresse IP ou hostname de ton Cisco ISE
+    ise_username: "API_admin"              # Ton utilisateur ISE API
+    ise_password: "Ouma123*"     # Ton mot de passe ISE API (penser à utiliser vault)
+    verify_ssl: false                  # mettre à true si certificat SSL valide
+
+    authorization_profile_payload:
+      AuthorizationProfile:
+        name: "Profil_Ansible_ACL"
+        description: "Profil créé via Ansible avec ACL uniquement"
+        accessType: "ACCESS_ACCEPT"
+        authzProfileType: "SWITCH"
+        vlan:
+          nameID: "VLAN_TEST"
+          tagID: 10
+        reauth:
+          timer: 1800
+          connectivity: "RADIUS_REQUEST"
+        airespaceACL: "ACL_NAME_IPV4"
+        airespaceIPv6ACL: "ACL_NAME_IPV6"
+        webRedirection:
+          WebRedirectionType: "CentralizedWebAuth"
+          acl: "ACL_WEB_REDIRECT"
+          portalName: "Sponsored Guest Portal (default)"
+          staticIPHostNameFQDN: "10.56.54.200"
+          displayCertificatesRenewalMessages: true
+        acl: "ACL_FILTER_GENERAL"
+        trackMovement: false
+        agentlessPosture: false
+        serviceTemplate: false
+        easywiredSessionCandidate: false
+        voiceDomainPermission: false
+        neat: false
+        webAuth: false
+        autoSmartPort: "autoSmartPort"
+        interfaceTemplate: "interfaceTemplate"
+        ipv6ACLFilter: "ipv6ACLFilter"
+        avcProfile: "avcProfile"
+        macSecPolicy: "MUST_SECURE"
+        asaVpn: "Cisco:cisco-abort-cause"
+        profileName: "Cisco"
+
+  tasks:
+    - name: Create Authorization Profile in Cisco ISE
+      uri:
+        url: "https://{{ ise_host }}:9060/ers/config/authorizationprofile"
+        method: POST
+        user: "{{ ise_username }}"
+        password: "{{ ise_password }}"
+        force_basic_auth: yes
+        headers:
+          Content-Type: "application/json"
+          Accept: "application/json"
+        body: "{{ authorization_profile_payload | to_json }}"
+        status_code: 201
+        validate_certs: "{{ verify_ssl }}"
+      register: result
+
+    - name: Show API response
+      debug:
+        var: result.json

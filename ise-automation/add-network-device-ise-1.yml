@@ -1,0 +1,53 @@
+- name: Ajouter un Network Device dans Cisco ISE
+  hosts: localhost
+  gather_facts: no
+
+  vars:
+    ise_host: "10.112.41.147"
+    ise_user: "API_admin"
+    ise_password: "Ouma123*"
+    device_name: "networkDevice1"
+    device_ip: "1.1.1.1"
+    shared_secret: "Cisco123*"
+
+  tasks:
+    - name: Ajouter un périphérique réseau dans Cisco ISE via REST API
+      uri:
+        url: "https://{{ ise_host }}:9060/ers/config/networkdevice"
+        method: POST
+        user: "{{ ise_user }}"
+        password: "{{ ise_password }}"
+        force_basic_auth: yes
+        validate_certs: no
+        status_code: 201
+        headers:
+          Accept: "application/json"
+          Content-Type: "application/json"
+        body_format: json
+        body:
+          NetworkDevice:
+            name: "{{ device_name }}"
+            description: "Ajouté via Ansible"
+            authenticationSettings:
+              radiusSharedSecret: "{{ shared_secret }}"
+              enableKeyWrap: false
+            snmpsettings:
+              version: "TWO_C"
+              roCommunity: "public"
+            tacacsSettings:
+              sharedSecret: "aaa"
+              connectModeOptions: "ON_LEGACY"
+            profileName: "Cisco"
+            coaPort: 1700
+            dtlsDnsName: "ISE213.il.com"
+            NetworkDeviceIPList:
+              - ipaddress: "{{ device_ip }}"
+                mask: 32
+            NetworkDeviceGroupList:
+              - "Location#All Locations"
+              - "Device Type#All Device Types"
+      register: result
+
+    - name: Afficher la réponse
+      debug:
+        var: result.json

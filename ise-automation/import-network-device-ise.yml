@@ -1,0 +1,28 @@
+- name: Test API Cisco ISE
+  hosts: localhost
+  gather_facts: no
+
+  vars:
+    ise_host: "https://10.112.41.147:9060"
+    ise_username: "API_admin"
+    ise_password: "Ouma123*"
+    validate_certs: false
+
+  tasks:
+    - name: Interroger l'API Cisco ISE - importer les network devices
+      uri:
+        url: "{{ ise_host }}/ers/config/networkdevice"
+        method: GET
+        user: "{{ ise_username }}"
+        password: "{{ ise_password }}"
+        force_basic_auth: yes
+        validate_certs: "{{ validate_certs }}"
+        headers:
+          Accept: "application/json"
+        return_content: yes
+      register: ise_response
+
+    - name: Afficher la réponse de l'API
+      debug:
+        var: ise_response.json
+
