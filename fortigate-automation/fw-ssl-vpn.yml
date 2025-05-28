@@ -1,0 +1,95 @@
+- name: Configure SSL VPN on fortigate
+  hosts: fortigates
+  collections:
+   - fortinet.fortios
+  connection: httpapi
+
+
+  vars:
+   ansible_httpapi_use_ssl: no
+   ansible_httpapi_validate_certs: no
+   ansible_httpapi_port: 80
+
+  tasks:
+  - name: Create SSL VPN user
+    fortinet.fortios.fortios_user_local:
+      vdom: "root"
+      state: "present"
+      user_local:
+        name: "Finance"
+        type: "password"
+        passwd: "Cisco123*"
+  - name: Create SSL VPN user group
+    fortinet.fortios.fortios_user_group:
+      vdom: "root"
+      state: "present"
+      user_group:
+        name: "SSLVPNUsers"
+        member: 
+          - name: "Finance"
+  - name: Create SSL VPN IP pool
+    fortinet.fortios.fortios_firewall_address:
+      vdom: "root"
+      state: "present"
+      firewall_address:
+        name: "SSLVPN_TUNNEL_ADDR1"
+        type: "iprange"
+        start_ip: "10.10.10.1"
+        end_ip: "10.10.10.100"
+  - name: Create address object for all
+    fortinet.fortios.fortios_firewall_address:
+      vdom: "root"
+      state: "present"
+      firewall_address:
+        name: "all"
+        subnet: "0.0.0.0 0.0.0.0"
+  - name: Create SSL VPN portal
+    fortinet.fortios.fortios_vpn_ssl_web_portal:
+      vdom: "root"
+      state: "present"
+      vpn_ssl_web_portal:
+        name: "full-access"
+        tunnel_mode: enable
+        web_mode: disable
+        ip_pools: 
+          - "SSLVPN_TUNNEL_ADDR1"
+        split_tunneling: enable
+        split_tunneling_routing_address:
+          - name: "all"
+  - name: Create SSL VPN settings
+    fortinet.fortios.fortios_vpn_ssl_settings:
+      vdom: "root"
+      state: "present"
+      vpn_ssl_settings:
+        servercert: "Fortinet_Factory"
+        ip_pools: 
+          - "SSLVPN_TUNNEL_ADDR1"
+        source_interface: 
+          - name: "port2"
+        source_address:       
+          - name: "all"
+        default_portal: "full-access"
+  - name: Configure firewall policy to allow SSL VPN traffic
+    fortinet.fortios.fortios_firewall_policy:
+      vdom: "root"
+      state: "present"
+      firewall_policy:
+        policyid: 100
+        name: "SSL_VPN_access"
+        srcintf:
+          - name: "ssl.root"
+        dstintf:
+          - name: "port3"
+        srcaddr:
+          - name: "all"
+        dstaddr:
+          - name: "all"
+        action: "accept"
+        schedule: "always"
+        service:
+          - name: "ALL"
+        nat: "enable"
+
+ 
+       
+

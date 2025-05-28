@@ -1,0 +1,35 @@
+- name: Configure firewall policies on fortigate
+  hosts: fortigates
+  collections:
+   - fortinet.fortios
+  connection: httpapi
+
+
+  vars:
+   ansible_httpapi_use_ssl: no
+   ansible_httpapi_validate_certs: no
+   ansible_httpapi_port: 80
+
+  tasks:
+  - name: permit ISE to NAD
+    fortinet.fortios.fortios_firewall_policy:
+      vdom: "root"
+      state: "present"
+      firewall_policy:
+        policyid: 2 
+        name: "Allow_NAD_to_ISE"
+        srcintf: 
+          - name: "port1"
+        dstintf: 
+          - name: "port4"
+        srcaddr: 
+          - name: "Mgmt-network"
+        dstaddr: 
+          - name: "all"
+        action: "accept"
+        schedule: "always"
+        service: 
+          - name: "ALL"
+        nat: "disable"
+
+

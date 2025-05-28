@@ -1,0 +1,70 @@
+- name: Configure fortigate interfaces 
+  hosts: fortigates
+  collections:
+   - fortinet.fortios
+  connection: httpapi
+
+
+  vars:
+   ansible_httpapi_use_ssl: no
+   ansible_httpapi_validate_certs: no
+   ansible_httpapi_port: 80
+
+  tasks:
+  - name: Configure interface port1
+    fortinet.fortios.fortios_system_interface:
+      vdom: "root"
+      state: "present"
+      system_interface:
+        name: "port1"
+        ip: "192.168.85.188 255.255.255.0"
+        allowaccess: 
+          - ping
+          - http
+          - ssh
+          - https
+        alias: "MGMT-interface"
+        status: "up"
+  - name: Configure interface port2
+    fortinet.fortios.fortios_system_interface:
+      vdom: "root"
+      state: "present"
+      system_interface:
+        name: "port2"
+        ip: "7.2.10.1 255.255.255.0"
+        allowaccess:
+          - ping
+          - http
+          - ssh
+          - https
+        alias: "WAN-interface"
+        status: "up"
+  - name: Configure interface port3
+    fortinet.fortios.fortios_system_interface:
+      vdom: "root"
+      state: "present"
+      system_interface:
+        name: "port3"
+        ip: "172.20.8.1 255.255.255.0"
+        allowaccess:
+          - ping
+          - http
+          - ssh
+          - https
+        alias: "LAN-interface"
+        status: "up"
+  - name: Configure interface port4
+    fortinet.fortios.fortios_system_interface:
+      vdom: "root"
+      state: "present"
+      system_interface:
+        name: "port4"
+        ip: "192.168.18.172 255.255.255.0"
+        allowaccess:
+          - ping
+          - http
+          - ssh
+          - https
+        alias: "interface-to-ise"
+        status: "up"
+

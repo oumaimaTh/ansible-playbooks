@@ -1,0 +1,41 @@
+- name: Configure static route on fortigate
+  hosts: fortigates
+  collections:
+   - fortinet.fortios
+  connection: httpapi
+
+
+  vars:
+   ansible_httpapi_use_ssl: no
+   ansible_httpapi_validate_certs: no
+   ansible_httpapi_port: 80
+
+  tasks:
+  - name: Add static route 1
+    fortinet.fortios.fortios_router_static:
+      vdom: "root"
+      state: "present"
+      router_static:
+        seq_num: 1
+        dst: "192.168.2.1/32"
+        gateway: "172.20.8.9"
+        device: "port3"
+  - name: Add static route 2       
+    fortinet.fortios.fortios_router_static:
+      vdom: "root"
+      state: "present"
+      router_static:
+        seq_num: 2
+        dst: "0.0.0.0/0"
+        gateway: "7.2.10.10"
+        device:	"port2"
+  - name: Add static route 3       
+    fortinet.fortios.fortios_router_static:
+      vdom: "root"
+      state: "present"
+      router_static:
+        seq_num: 3
+        dst: "10.112.41.147/32"
+        gateway: "192.168.18.2"
+        device:	"port4"
+

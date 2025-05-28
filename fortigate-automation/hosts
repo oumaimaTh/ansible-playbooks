@@ -1,0 +1,8 @@
+[fortigates]
+FW1 ansible_host=192.168.85.188 
+
+[fortigates:vars]
+ansible_network_os=fortinet.fortios.fortios
+ansible_lo_path=/tmp/ansible.network.log
+ansible_user=admin 
+ansible_password=for
