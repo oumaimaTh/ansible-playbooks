@@ -1,0 +1,66 @@
+- name: Mise à jour IP de port2 avec modification forcée sur FortiMail
+  hosts: localhost
+  gather_facts: no
+  vars:
+    fortimail_host: "192.168.85.164"
+    fortimail_username: "restapi"
+    fortimail_password: "Ouma123*"
+    new_ip: "5.2.33.4/24"  # ⚠ Adresse IP unique dans le réseau
+    login_url: "https://{{ fortimail_host }}/api/v1/AdminLogin/"
+    interface_url: "https://{{ fortimail_host }}/api/v1/SysInterface/port2/"
+
+  tasks:
+    - name: Authentification à FortiMail
+      uri:
+        url: "{{ login_url }}"
+        method: POST
+        headers:
+          Content-Type: "application/json"
+        body_format: json
+        body:
+          name: "{{ fortimail_username }}"
+          password: "{{ fortimail_password }}"
+        validate_certs: no
+        return_content: yes
+      register: login_response
+
+    - name: Extraire cookie APSCOOKIE + csrf_token
+      set_fact:
+        session_cookie: "{{ login_response.set_cookie | regex_search('APSCOOKIE[^;]+') }}"
+        csrf_token: "{{ login_response.json.csrf_token }}"
+
+    - name: Modifier port2 avec champs modifiés
+      uri:
+        url: "{{ interface_url }}"
+        method: PUT
+        headers:
+          Content-Type: "application/json"
+          Cookie: "{{ session_cookie }}"
+          X-Csrf-Token: "{{ csrf_token }}"
+        body_format: json
+        body:
+          mkey: "port2"
+          type: 0
+          aggregate_master: 0
+          bridge_member: false
+          ip: "{{ new_ip }}"
+          ip6: "::/0"
+          allowaccess: 63
+          webaccess: 2              # ← différent de la config actuelle
+          mailaccess: 63
+          status: true
+          interface: ""
+          aggregate_member: ""
+          incoming_mode: 3          # ← différent pour forcer changed
+          outgoing_mode: 0
+          local: true
+          link_status: true
+          isReferenced: 1
+          modifyFlag: 1
+        validate_certs: no
+        return_content: yes
+      register: update_response
+
+    - name: Afficher la réponse JSON
+      debug:
+        var: update_response.json

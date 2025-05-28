@@ -1,0 +1,51 @@
+- name: Configurer les serveurs DNS sur FortiMail
+  hosts: localhost
+  gather_facts: no
+  vars:
+    fortimail_host: "192.168.85.164"
+    fortimail_username: "restapi"
+    fortimail_password: "Ouma123*"
+    primary_dns: "5.2.33.5"
+    secondary_dns: "8.8.8.8"
+    login_url: "https://{{ fortimail_host }}/api/v1/AdminLogin/"
+    dns_url: "https://{{ fortimail_host }}/api/v1/SysGlobal/"
+
+  tasks:
+    - name: Authentification à FortiMail
+      uri:
+        url: "{{ login_url }}"
+        method: POST
+        headers:
+          Content-Type: "application/json"
+        body_format: json
+        body:
+          name: "{{ fortimail_username }}"
+          password: "{{ fortimail_password }}"
+        validate_certs: no
+        return_content: yes
+      register: login_response
+
+    - name: Extraire cookie APSCOOKIE + csrf_token
+      set_fact:
+        session_cookie: "{{ login_response.set_cookie | regex_search('APSCOOKIE[^;]+') }}"
+        csrf_token: "{{ login_response.json.csrf_token }}"
+
+    - name: Configuration des serveurs DNS
+      uri:
+        url: "{{ dns_url }}"
+        method: PUT
+        headers:
+          Content-Type: "application/json"
+          Cookie: "{{ session_cookie }}"
+          X-Csrf-Token: "{{ csrf_token }}"
+        body_format: json
+        body:
+          dns_primary: "{{ primary_dns }}"
+          dns_secondary: "{{ secondary_dns }}"
+        validate_certs: no
+        return_content: yes
+      register: dns_response
+
+    - name: Afficher la réponse JSON
+      debug:
+        var: dns_response.json

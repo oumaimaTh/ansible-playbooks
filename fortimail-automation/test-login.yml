@@ -1,0 +1,45 @@
+- name: Connexion FortiMail et réutilisation du cookie à la main
+  hosts: localhost
+  gather_facts: no
+  connection: local
+  vars:
+    fortimail_host: "192.168.85.164"
+    fortimail_username: "restapi"
+    fortimail_password: "Ouma123*"
+    login_url: "https://{{ fortimail_host }}/api/v1/AdminLogin"
+    info_url: "https://{{ fortimail_host }}/api/v1/SysStatusSysinfo/"
+
+  tasks:
+    - name: Se connecter à FortiMail
+      uri:
+        url: "{{ login_url }}"
+        method: POST
+        headers:
+          Content-Type: "application/json"
+        body_format: json
+        body:
+          name: "{{ fortimail_username }}"
+          password: "{{ fortimail_password }}"
+        validate_certs: no
+        return_content: yes
+      register: login_response
+
+    - name: Extraire le cookie APSCOOKIE
+      set_fact:
+        session_cookie: "{{ login_response.set_cookie | regex_search('APSCOOKIE[^;]+') }}"
+        csrf_token: "{{ login_response.json.csrf_token }}"
+
+    - name: Appeler une API GET avec cookie de session et CSRF token
+      uri:
+        url: "{{ info_url }}"
+        method: GET
+        headers:
+          X-Csrf-Token: "{{ csrf_token }}"
+          Cookie: "{{ session_cookie }}"
+        validate_certs: no
+        return_content: yes
+      register: sysinfo_response
+
+    - name: Afficher les infos système
+      debug:
+        var: sysinfo_response.json

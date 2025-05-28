@@ -1,0 +1,58 @@
+- name: Ajouter un utilisateur mail sur FortiMail via API
+  hosts: localhost
+  gather_facts: no
+  vars:
+    fortimail_host: "192.168.85.164"
+    fortimail_username: "restapi"
+    fortimail_password: "Ouma123*"
+    user_name: "cciecontractorpc"
+    user_domain: "mynetwork.com"
+    user_password: "User123*"
+    login_url: "https://{{ fortimail_host }}/api/v1/AdminLogin/"
+    user_url: "https://{{ fortimail_host }}/api/v1/domain/{{ user_domain }}/UserPreference/"
+
+  tasks:
+    - name: Authentification à FortiMail
+      uri:
+        url: "{{ login_url }}"
+        method: POST
+        headers:
+          Content-Type: "application/json"
+        body_format: json
+        body:
+          name: "{{ fortimail_username }}"
+          password: "{{ fortimail_password }}"
+        validate_certs: no
+        return_content: yes
+      register: login_response
+
+    - name: Extraire cookie APSCOOKIE + csrf_token
+      set_fact:
+        session_cookie: "{{ login_response.set_cookie | regex_search('APSCOOKIE[^;]+') }}"
+        csrf_token: "{{ login_response.json.csrf_token }}"
+
+    - name: Créer un utilisateur
+      uri:
+        url: "{{ user_url }}/{{ user_name }}@{{ user_domain }}/"
+        method: POST
+        headers:
+          Content-Type: "application/json"
+          Cookie: "{{ session_cookie }}"
+          X-Csrf-Token: "{{ csrf_token }}"
+        body_format: json
+        body:
+          mkey: "{{ user_name }}@{{ user_domain }}"
+          name: "{{ user_name }}@{{ user_domain }}"
+          passwd: "{{ user_password }}"
+          domain: "{{ user_domain }}"
+          type: "local"
+          comment: "Créé via Ansible"
+          status: true
+          quaratine_report: false
+        validate_certs: no
+        return_content: yes
+      register: user_response
+
+    - name: Afficher la réponse JSON
+      debug:
+        var: user_response.json

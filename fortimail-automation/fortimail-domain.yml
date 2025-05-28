@@ -1,0 +1,57 @@
+- name: Ajouter un domaine sur FortiMail via API
+  hosts: localhost
+  gather_facts: no
+  vars:
+    fortimail_host: "192.168.85.164"
+    fortimail_username: "restapi"
+    fortimail_password: "Ouma123*"
+    new_domain: "mynetwork.com"
+    login_url: "https://{{ fortimail_host }}/api/v1/AdminLogin/"
+    domain_url: "https://{{ fortimail_host }}/api/v1/domain/"
+
+  tasks:
+    - name: Authentification à FortiMail
+      uri:
+        url: "{{ login_url }}"
+        method: POST
+        headers:
+          Content-Type: "application/json"
+        body_format: json
+        body:
+          name: "{{ fortimail_username }}"
+          password: "{{ fortimail_password }}"
+        validate_certs: no
+        return_content: yes
+      register: login_response
+
+    - name: Extraire cookie APSCOOKIE + csrf_token
+      set_fact:
+        session_cookie: "{{ login_response.set_cookie | regex_search('APSCOOKIE[^;]+') }}"
+        csrf_token: "{{ login_response.json.csrf_token }}"
+
+    - name: Ajouter un domaine
+      uri:
+        url: "{{ domain_url }}/{{ new_domain }}/"
+        method: POST
+        headers:
+          Content-Type: "application/json"
+          Cookie: "{{ session_cookie }}"
+          X-Csrf-Token: "{{ csrf_token }}"
+        body_format: json
+        body:
+          mkey: "{{ new_domain }}"
+          domain: "{{ new_domain }}"
+          type: "local"             # ou "relay" selon le besoin
+          enabled: true
+          description: "Ajouté via Ansible"
+          ldap_profile: ""
+          smtp_auth: false
+          smtps: false
+          starttls: false	
+        validate_certs: no
+        return_content: yes
+      register: domain_response
+
+    - name: Afficher la réponse JSON
+      debug:
+        var: domain_response.json
