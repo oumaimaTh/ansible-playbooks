@@ -13,7 +13,7 @@
   tasks:
   - name: permit ISE to NAD
     fortinet.fortios.fortios_firewall_policy:
-      vdom: "root"
+      vdom: root"
       state: "present"
       firewall_policy:
         policyid: 2 
