@@ -1,0 +1,15 @@
+- name: Donner une adresse  l'interface wan
+  hosts: pfsense
+  gather_facts: no
+  tasks:
+
+    - name: Attribuer ip  l'interface wan
+      raw: ifconfig vtnet0 inet 5.2.27.2 netmask 255.255.255.0 up
+
+    - name: Vérifier la configuration de l'interface
+      raw: ifconfig vtnet0
+      register: interface_output
+
+    - name: Afficher le resultat
+      debug:
+        var: interface_output.stdout

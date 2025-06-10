@@ -1,0 +1,10 @@
+- name: afficher les interfaces pfsense
+  hosts: pfsense
+  gather_facts: no
+  tasks:
+    - name: Lister les interfaces 
+      raw: ifconfig -a 
+      register: interfaces_output
+    - name: Afficher la sortie
+      debug: 
+        var: interfaces_output.stdout

@@ -1,0 +1,10 @@
+- name: afficher les packages installe sur pfsense
+  hosts: pfsense
+  gather_facts: no
+  tasks:
+    - name: Lister les packages installe sur pfsense
+      raw: pkg info
+      register: pkg_output
+    - name: Afficher la sortie
+      debug:
+        var: pkg_output.stdout

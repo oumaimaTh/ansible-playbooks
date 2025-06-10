@@ -1,0 +1,18 @@
+- name: Ajouter une règle firewall temporaire sur WAN (pfctl)
+  hosts: pfsense
+  gather_facts: no
+  tasks:
+
+    - name: Créer le fichier temporaire contenant la règle
+      raw: echo 'pass in quick on vtnet0 proto icmp from any to any' > /tmp/wan_rule.conf
+
+    - name: Charger la règle avec pfctl
+      raw: pfctl -a ansible_wan -f /tmp/wan_rule.conf
+
+    - name: Vérifier les règles chargées
+      raw: pfctl -a ansible_wan -sr
+      register: rules_output
+
+    - name: Afficher les règles appliquées
+      debug:
+        var: rules_output.stdout

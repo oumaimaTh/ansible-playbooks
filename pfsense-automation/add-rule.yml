@@ -1,0 +1,13 @@
+
+- name: Ajouter une regle firewall dans pfsense pfsense
+  hosts: pfsense
+  gather_facts: no
+  tasks:
+    - name: Ajouter une regle icmp sur l'interface wan de pfsense
+      raw: ｜
+        echo "pass in quick on em0 proto from any to any" >> /tmp/wan_rule.conf 
+        pfctl -a ansible_wan -f /tmp/wan_rule.conf
+      register: rule_output
+    - name: Afficher la sortie
+      debug:
+        var: rule_output.stdout
